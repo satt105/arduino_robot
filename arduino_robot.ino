@@ -1,14 +1,16 @@
 #include "Grove_I2C_Motor_Driver.h"
 
 #define I2C_ADDRESS_Moteur 0x0f // addresse driver l298 par défauts
-char message;
+char message;                   // message recu par bluetooth
+int contact_moteur = 13;        // pin actionneur
 
 void setup()
 {
-  Serial.begin(9600);
-  Serial1.begin(9600);
-  Motor.begin(I2C_ADDRESS_Moteur);
-  delay(1000);
+  Serial.begin(9600);              // vitesse du moniteur série
+  Serial1.begin(9600);             // vitesse du bluetooth
+  Motor.begin(I2C_ADDRESS_Moteur); // configuration adresse
+  pinMode(contact_moteur, OUTPUT);
+  delay(1000);                     // délais de préparation des composants
   Serial.println("READY");
 }
 
@@ -43,6 +45,10 @@ void loop()
     {
       Serial.println("tourne a droite");
       droit();
+    }
+    else if (message == 6)
+    {
+      digitalWrite(contact_moteur, HIGH);
     }
   }
 }
