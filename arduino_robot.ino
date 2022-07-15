@@ -36,17 +36,17 @@ void loop()
       Serial.println("on recule");
       recule();
     }
-    else if (message == 4)
+    else if (message == '4')
     {
       Serial.println("tourne a gauche");
       gauche();
     }
-    else if (message == 5)
+    else if (message == '5')
     {
       Serial.println("tourne a droite");
       droit();
     }
-    else if (message == 6)
+    else if (message == '6')
     {
       digitalWrite(contact_moteur, HIGH);
     }
