@@ -2,7 +2,7 @@
 
 #define I2C_ADDRESS_Moteur 0x0f // addresse driver l298 par défauts
 char message;                   // message recu par bluetooth
-byte contact_moteur = 13;       // pin actionneur
+const byte contact_moteur = 23; // pin actionneur
 bool etat_contact = false;      // variable de l'état du contacteur
 
 void setup()
@@ -23,32 +23,39 @@ void loop()
     char message = Serial1.read();
     Serial.print(F("code bluetooth recu: "));
     Serial.println(message);
-    if (message == '1') // on s'arrete
+    switch (message) // mise en switch (meilleurs prise en charge)
     {
+    case '1':
+    { // on s'arrete
       Serial.println(F("arret"));
       stop_moteur(); // arret des moteur
+      break;
     }
-    else if (message == '2') // on avance
+    case '2':
     {
       Serial.println(F("en marche"));
       avance(); // mise en marche des 2 moteurs
+      break;
     }
-    else if (message == '3') // on recule
+    case '3':
     {
       Serial.println(F("on recule"));
       recule();
+      break;
     }
-    else if (message == '4')
+    case '4':
     {
       Serial.println(F("tourne a gauche"));
       gauche();
+      break;
     }
-    else if (message == '5')
+    case '5':
     {
       Serial.println(F("tourne a droite"));
       droit();
+      break;
     }
-    else if (message == '6')
+    case '6':
     {
       if (etat_contact == false)
       {
@@ -64,6 +71,8 @@ void loop()
         etat_contact = false;
         Serial1.print(F("extinction contacteur moteur"));
       }
+      break;
+    }
     }
   }
   message = 'n'; // sup du précédents message
