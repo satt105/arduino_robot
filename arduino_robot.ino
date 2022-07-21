@@ -4,7 +4,8 @@
 char message;                   // message recu par bluetooth
 const byte contact_moteur = 23; // pin actionneur
 bool etat_contact = false;      // variable de l'état du contacteur
-
+// moteur 1 = gauche
+// moteur 2 = droite
 void setup()
 {
   Serial.begin(9600);                // vitesse du moniteur série
@@ -94,11 +95,11 @@ void recule()
 }
 void gauche()
 {
-  Motor.speed(MOTOR1, 100);
-  Motor.speed(MOTOR2, -100);
+  Motor.speed(MOTOR1, -100);
+  Motor.speed(MOTOR2, 100);
 }
 void droit()
 {
-  Motor.speed(MOTOR1, -100);
-  Motor.speed(MOTOR2, 100);
+  Motor.speed(MOTOR1, 100);
+  Motor.speed(MOTOR2, -100);
 }
