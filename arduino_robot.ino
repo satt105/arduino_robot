@@ -7,28 +7,25 @@ BMM150 bmm = BMM150();
 
 // les variables
 char message;                           // message recu par bluetooth sur 1 octet
-const byte contact_moteur = 23;         // pin actionneur
 const byte pinavantmoteurdroit = 22;    // pin actionneur marche avant moteur droit
 const byte pinarrieremoteurdroit = 23;  // pin actionneur marche arriere moteur droit
 const byte pinavantmoteurgauche = 24;   // pin actionneur marche avant moteur gauche
 const byte pinarrieremoteurgauche = 25; // pin actionneur marche arriere moteur gauche
 const byte margemin = 0;                // la marge minimale du compas
 const byte margemax = 5;                // la marge maximale d'erreur du compas
+float angle_vehicule;                   // angle renvoyé par le compas
 bool Fonction_automatique = true;       // check des outils pour l'auto_mode
-bool etat_contact = false;              // variable de l'état du contacteur
 
 // le code
 void setup()
 {
   Serial.begin(9600);              // vitesse du moniteur série
   Serial1.begin(9600);             // vitesse du bluetooth
-  pinMode(contact_moteur, OUTPUT); // configuration de la sortie du contacteur
   pinMode(pinarrieremoteurdroit, OUTPUT);
   pinMode(pinavantmoteurdroit, OUTPUT);
   pinMode(pinavantmoteurgauche, OUTPUT);
   pinMode(pinarrieremoteurgauche, OUTPUT);
   stop_moteur();
-  digitalWrite(contact_moteur, LOW);               // arret du contacteur si precedements actif
   if (bmm.initialize() == BMM150_E_ID_NOT_CONFORM) // vérification des fonction automatique
   {
     Serial.println(F("Defaut compas!"));
