@@ -1,17 +1,21 @@
-#include "Grove_I2C_Motor_Driver.h"
-
-#define I2C_ADDRESS_Moteur 0x0f // addresse driver l298 par défauts
 char message;                   // message recu par bluetooth
 const byte contact_moteur = 23; // pin actionneur
-bool etat_contact = false;      // variable de l'état du contacteur
-// moteur 1 = gauche
-// moteur 2 = droite
+const byte pinavantmoteurdroit = 22;
+const byte pinarrieremoteurdroit = 23;
+const byte pinavantmoteurgauche = 24;
+const byte pinarrieremoteurgauche = 25;
+bool etat_contact = false; // variable de l'état du contacteur
+
 void setup()
 {
-  Serial.begin(9600);                // vitesse du moniteur série
-  Serial1.begin(9600);               // vitesse du bluetooth
-  Motor.begin(I2C_ADDRESS_Moteur);   // configuration adresse
-  pinMode(contact_moteur, OUTPUT);   // configuration de la sortie du contacteur
+  Serial.begin(9600);              // vitesse du moniteur série
+  Serial1.begin(9600);             // vitesse du bluetooth
+  pinMode(contact_moteur, OUTPUT); // configuration de la sortie du contacteur
+  pinMode(pinarrieremoteurdroit, OUTPUT);
+  pinMode(pinavantmoteurdroit, OUTPUT);
+  pinMode(pinavantmoteurgauche, OUTPUT);
+  pinMode(pinarrieremoteurgauche, OUTPUT);
+  stop_moteur();
   digitalWrite(contact_moteur, LOW); // arret du contacteur si precedements actif
   delay(1000);                       // délais de préparation des composants
   Serial.println("READY");
@@ -80,26 +84,36 @@ void loop()
 }
 void avance()
 {
-  Motor.speed(MOTOR1, 100);
-  Motor.speed(MOTOR2, 100);
+  digitalWrite(pinarrieremoteurdroit, LOW);
+  digitalWrite(pinarrieremoteurgauche, LOW);
+  digitalWrite(pinavantmoteurdroit, HIGH);
+  digitalWrite(pinavantmoteurgauche, HIGH);
 }
 void stop_moteur()
 {
-  Motor.stop(MOTOR1);
-  Motor.stop(MOTOR2);
+  digitalWrite(pinarrieremoteurdroit, LOW);
+  digitalWrite(pinavantmoteurdroit, LOW);
+  digitalWrite(pinavantmoteurgauche, LOW);
+  digitalWrite(pinarrieremoteurgauche, LOW);
 }
 void recule()
 {
-  Motor.speed(MOTOR1, -100);
-  Motor.speed(MOTOR2, -100);
+  digitalWrite(pinavantmoteurdroit, LOW);
+  digitalWrite(pinavantmoteurgauche, LOW);
+  digitalWrite(pinarrieremoteurgauche, HIGH);
+  digitalWrite(pinarrieremoteurdroit, HIGH);
 }
 void gauche()
 {
-  Motor.speed(MOTOR1, -100);
-  Motor.speed(MOTOR2, 100);
+  digitalWrite(pinarrieremoteurdroit, LOW);
+  digitalWrite(pinavantmoteurgauche, LOW);
+  digitalWrite(pinavantmoteurdroit, HIGH);
+  digitalWrite(pinarrieremoteurgauche, HIGH);
 }
 void droit()
 {
-  Motor.speed(MOTOR1, 100);
-  Motor.speed(MOTOR2, -100);
+  digitalWrite(pinavantmoteurdroit, LOW);
+  digitalWrite(pinarrieremoteurgauche, LOW);
+  digitalWrite(pinarrieremoteurdroit, HIGH);
+  digitalWrite(pinavantmoteurgauche, HIGH);
 }
