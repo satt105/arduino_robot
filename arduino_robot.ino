@@ -1,11 +1,23 @@
-char message;                   // message recu par bluetooth
-const byte contact_moteur = 23; // pin actionneur
-const byte pinavantmoteurdroit = 22;
-const byte pinarrieremoteurdroit = 23;
-const byte pinavantmoteurgauche = 24;
-const byte pinarrieremoteurgauche = 25;
-bool etat_contact = false; // variable de l'état du contacteur
+// les libs
+#include "bmm150.h"
+#include "bmm150_defs.h"
 
+// création objets
+BMM150 bmm = BMM150();
+
+// les variables
+char message;                           // message recu par bluetooth sur 1 octet
+const byte contact_moteur = 23;         // pin actionneur
+const byte pinavantmoteurdroit = 22;    // pin actionneur marche avant moteur droit
+const byte pinarrieremoteurdroit = 23;  // pin actionneur marche arriere moteur droit
+const byte pinavantmoteurgauche = 24;   // pin actionneur marche avant moteur gauche
+const byte pinarrieremoteurgauche = 25; // pin actionneur marche arriere moteur gauche
+const byte margemin = 0;                // la marge minimale du compas
+const byte margemax = 5;                // la marge maximale d'erreur du compas
+bool Fonction_automatique = true;       // check des outils pour l'auto_mode
+bool etat_contact = false;              // variable de l'état du contacteur
+
+// le code
 void setup()
 {
   Serial.begin(9600);              // vitesse du moniteur série
@@ -16,8 +28,19 @@ void setup()
   pinMode(pinavantmoteurgauche, OUTPUT);
   pinMode(pinarrieremoteurgauche, OUTPUT);
   stop_moteur();
-  digitalWrite(contact_moteur, LOW); // arret du contacteur si precedements actif
-  delay(1000);                       // délais de préparation des composants
+  digitalWrite(contact_moteur, LOW);               // arret du contacteur si precedements actif
+  if (bmm.initialize() == BMM150_E_ID_NOT_CONFORM) // vérification des fonction automatique
+  {
+    Serial.println(F("Defaut compas!"));
+    Serial.println(F("Blocage des fonctions automatique"));
+    Fonction_automatique = false;
+  }
+  else
+  {
+    Serial.println(F("fonction automatique disponible"));
+    Fonction_automatique = true;
+  }
+  delay(1000); // délais de préparation des composants
   Serial.println("READY");
 }
 
@@ -30,51 +53,42 @@ void loop()
     Serial.println(message);
     switch (message) // mise en switch (meilleurs prise en charge)
     {
-    case '1':
+    case 'S':
     { // on s'arrete
       Serial.println(F("arret"));
       stop_moteur(); // arret des moteur
       break;
     }
-    case '2':
+    case 'A':
     {
       Serial.println(F("en marche"));
       avance(); // mise en marche des 2 moteurs
       break;
     }
-    case '3':
+    case 'R':
     {
       Serial.println(F("on recule"));
       recule();
       break;
     }
-    case '4':
+    case 'G':
     {
       Serial.println(F("tourne a gauche"));
       gauche();
       break;
     }
-    case '5':
+    case 'D':
     {
       Serial.println(F("tourne a droite"));
       droit();
       break;
     }
-    case '6':
+    case 'I':
     {
-      if (etat_contact == false)
+      if (Fonction_automatique == true)
       {
-        Serial.println(F("allumage contacteur moteur"));
-        digitalWrite(contact_moteur, HIGH);
-        etat_contact = true;
-        Serial1.print(F("allumage moteur"));
-      }
-      else if (etat_contact == true)
-      {
-        Serial.println(F("extinction contacteur moteur"));
-        digitalWrite(contact_moteur, LOW);
-        etat_contact = false;
-        Serial1.print(F("extinction contacteur moteur"));
+        Serial.println(F("Mode demi-tour droit"));
+        demi_tour_droit();
       }
       break;
     }
@@ -82,6 +96,7 @@ void loop()
   }
   message = 'n'; // sup du précédents message
 }
+// les fonctions
 void avance()
 {
   digitalWrite(pinarrieremoteurdroit, LOW);
@@ -116,4 +131,7 @@ void droit()
   digitalWrite(pinarrieremoteurgauche, LOW);
   digitalWrite(pinarrieremoteurdroit, HIGH);
   digitalWrite(pinavantmoteurgauche, HIGH);
+}
+void demi_tour_droit()
+{
 }
