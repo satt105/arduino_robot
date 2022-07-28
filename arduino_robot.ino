@@ -6,25 +6,34 @@
 BMM150 bmm = BMM150();
 
 // les variables
-char message;                           // message recu par bluetooth sur 1 octet
-const byte pinavantmoteurdroit = 22;    // pin actionneur marche avant moteur droit
-const byte pinarrieremoteurdroit = 23;  // pin actionneur marche arriere moteur droit
-const byte pinavantmoteurgauche = 24;   // pin actionneur marche avant moteur gauche
-const byte pinarrieremoteurgauche = 25; // pin actionneur marche arriere moteur gauche
-const byte margemin = 0;                // la marge minimale du compas
-const byte margemax = 5;                // la marge maximale d'erreur du compas
-float angle_vehicule;                   // angle renvoyé par le compas
-bool Fonction_automatique = true;       // check des outils pour l'auto_mode
-
+char message;                                 // message recu par bluetooth sur 1 octet
+const unsigned int TRANSFERT_INTERVAL = 2000; // délais de transfert des données bluetooth
+unsigned long previousMillis = 0;             // précédente valeur retournée par la fonction
+const byte pinavantmoteurdroit = 24;          // pin actionneur marche avant moteur droit
+const byte pinarrieremoteurdroit = 25;        // pin actionneur marche arriere moteur droit
+const byte pinavantmoteurgauche = 22;         // pin actionneur marche avant moteur gauche
+const byte pinarrieremoteurgauche = 23;       // pin actionneur marche arriere moteur gauche
+const byte margemin = 0;                      // la marge minimale du compas
+const byte margemax = 5;                      // la marge maximale d'erreur du compas
+float angle_vehicule;                         // angle renvoyé par le compas
+bool Fonction_automatique = true;             // check des outils pour l'auto_mode
+byte contact_moteur = 2;                      // pin actionneur
+bool etat_contact = false;                    // variable de l'état du contacteur
+String code = "|";                            // code de séparation des données
+String messageretour;                         // déclaration du message de retour vers le téléphone
+String fakecode = "12";                       // déclaration fausse donnée de debut
+String message_contact;                       // string variable de conversion
 // le code
 void setup()
 {
-  Serial.begin(9600);              // vitesse du moniteur série
-  Serial1.begin(9600);             // vitesse du bluetooth
+  Serial.begin(9600);  // vitesse du moniteur série
+  Serial1.begin(9600); // vitesse du bluetooth
   pinMode(pinarrieremoteurdroit, OUTPUT);
   pinMode(pinavantmoteurdroit, OUTPUT);
   pinMode(pinavantmoteurgauche, OUTPUT);
   pinMode(pinarrieremoteurgauche, OUTPUT);
+  pinMode(contact_moteur, OUTPUT);   // configuration de la sortie du contacteur
+  digitalWrite(contact_moteur, LOW); // arret du contacteur si precedements actif
   stop_moteur();
   if (bmm.initialize() == BMM150_E_ID_NOT_CONFORM) // vérification des fonction automatique
   {
@@ -45,7 +54,7 @@ void loop()
 {
   if (Serial1.available())
   {
-    char message = Serial1.read();
+    message = Serial1.read();
     Serial.print(F("code bluetooth recu: "));
     Serial.println(message);
     switch (message) // mise en switch (meilleurs prise en charge)
@@ -89,9 +98,45 @@ void loop()
       }
       break;
     }
+    case 'C':
+    {
+      if (etat_contact == false)
+      {
+        Serial.println(F("allumage contacteur moteur"));
+        digitalWrite(contact_moteur, HIGH);
+        etat_contact = true;
+        Serial1.print(F("allumage moteur"));
+      }
+      else if (etat_contact == true)
+      {
+        Serial.println(F("extinction contacteur moteur"));
+        digitalWrite(contact_moteur, LOW);
+        etat_contact = false;
+        Serial1.print(F("extinction contacteur moteur"));
+      }
+    }
     }
   }
   message = 'n'; // sup du précédents message
+  unsigned long currentMillis = millis();
+  // Si TRANSFERT_INTERVAL ou plus millisecondes se sont écoulés
+  if (currentMillis - previousMillis >= TRANSFERT_INTERVAL)
+  {
+    // Garde en mémoire la valeur actuelle de millis()
+    previousMillis = currentMillis;
+    if (contact_moteur == true)
+    {
+      message_contact = "1";
+    }
+    else
+    {
+      message_contact = "0";
+    }
+    messageretour = message_contact + code + fakecode;
+    Serial.print("data: ");
+    Serial.println(messageretour);
+    Serial1.print(messageretour);
+  }
 }
 // les fonctions
 void avance()
@@ -128,6 +173,11 @@ void droit()
   digitalWrite(pinarrieremoteurgauche, LOW);
   digitalWrite(pinarrieremoteurdroit, HIGH);
   digitalWrite(pinavantmoteurgauche, HIGH);
+}
+void allumage_contacteur()
+{
+  digitalWrite(contact_moteur, HIGH);
+  contact_moteur = true;
 }
 void demi_tour_droit()
 {
