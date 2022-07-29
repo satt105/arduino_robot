@@ -124,7 +124,7 @@ void loop()
   {
     // Garde en mémoire la valeur actuelle de millis()
     previousMillis = currentMillis;
-    if (contact_moteur == true)
+    if (etat_contact == true)
     {
       message_contact = "1";
     }
