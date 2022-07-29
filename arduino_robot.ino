@@ -1,4 +1,6 @@
 // les libs
+#include <Arduino.h>
+#include <Wire.h>
 #include "bmm150.h"
 #include "bmm150_defs.h"
 
@@ -21,7 +23,6 @@ byte contact_moteur = 2;                      // pin actionneur
 bool etat_contact = false;                    // variable de l'état du contacteur
 String code = "|";                            // code de séparation des données
 String messageretour;                         // déclaration du message de retour vers le téléphone
-String fakecode = "12";                       // déclaration fausse donnée de debut
 String message_contact;                       // string variable de conversion
 // le code
 void setup()
@@ -32,9 +33,9 @@ void setup()
   pinMode(pinavantmoteurdroit, OUTPUT);
   pinMode(pinavantmoteurgauche, OUTPUT);
   pinMode(pinarrieremoteurgauche, OUTPUT);
-  pinMode(contact_moteur, OUTPUT);   // configuration de la sortie du contacteur
-  digitalWrite(contact_moteur, LOW); // arret du contacteur si precedements actif
-  stop_moteur();
+  pinMode(contact_moteur, OUTPUT);                 // configuration de la sortie du contacteur
+  digitalWrite(contact_moteur, LOW);               // arret du contacteur si precedements actif
+  stop_moteur();                                   // arret des moteur obligatoire pour le début
   if (bmm.initialize() == BMM150_E_ID_NOT_CONFORM) // vérification des fonction automatique
   {
     Serial.println(F("Defaut compas!"));
@@ -105,14 +106,12 @@ void loop()
         Serial.println(F("allumage contacteur moteur"));
         digitalWrite(contact_moteur, HIGH);
         etat_contact = true;
-        Serial1.print(F("allumage moteur"));
       }
       else if (etat_contact == true)
       {
         Serial.println(F("extinction contacteur moteur"));
         digitalWrite(contact_moteur, LOW);
         etat_contact = false;
-        Serial1.print(F("extinction contacteur moteur"));
       }
     }
     }
@@ -131,8 +130,8 @@ void loop()
     else
     {
       message_contact = "0";
-    }
-    messageretour = message_contact + code + fakecode;
+    } 
+    messageretour = message_contact + code + data_compas();
     Serial.print("data: ");
     Serial.println(messageretour);
     Serial1.print(messageretour);
@@ -179,6 +178,31 @@ void allumage_contacteur()
   digitalWrite(contact_moteur, HIGH);
   contact_moteur = true;
 }
+
+float data_compas()
+{
+  bmm150_mag_data value;
+  bmm.read_mag_data();
+
+  value.x = bmm.raw_mag_data.raw_datax;
+  value.y = bmm.raw_mag_data.raw_datay;
+  value.z = bmm.raw_mag_data.raw_dataz;
+
+  float xyHeading = atan2(value.x, value.y);
+  float heading = xyHeading;
+
+  if (heading < 0)
+  {
+    heading += 2 * PI;
+  }
+  if (heading > 2 * PI)
+  {
+    heading -= 2 * PI;
+  }
+  float angle = heading * 180 / M_PI;
+  return angle;
+}
+
 void demi_tour_droit()
 {
 }
