@@ -1,8 +1,6 @@
 // les libs
-#include <Arduino.h>
-#include <Wire.h>
 #include "bmm150.h"
-#include "bmm150_defs.h"
+// #include <HCSR04.h>
 
 // création objets
 BMM150 bmm = BMM150();
@@ -19,15 +17,16 @@ bool Fonction_automatique = true;             // check des outils pour l'auto_mo
 byte contact_moteur = 2;                      // pin actionneur
 bool etat_contact = false;                    // variable de l'état du contacteur
 String code = "|";                            // code de séparation des données
+bool code_arret;                              // code pour mettre fin au fonction automatique
 String messageretour;                         // déclaration du message de retour vers le téléphone
 String message_contact;                       // string variable de conversion
-const byte margemax = 20;                     // la marge maximale d'erreur du compas
+const byte margemax = 10;                     // la marge maximale d'erreur du compas
 
 // le code
 void setup()
 {
-  Serial.begin(9600);  // vitesse du moniteur série
-  Serial1.begin(9600); // vitesse du bluetooth
+  Serial.begin(115200); // vitesse du moniteur série
+  Serial1.begin(9600);  // vitesse du bluetooth
   pinMode(pinarrieremoteurdroit, OUTPUT);
   pinMode(pinavantmoteurdroit, OUTPUT);
   pinMode(pinavantmoteurgauche, OUTPUT);
@@ -188,6 +187,28 @@ void allumage_contacteur()
   digitalWrite(contact_moteur, HIGH);
   contact_moteur = true;
 }
+bool signal_arret()
+{
+  if (Serial1.available())
+  {
+    message = Serial1.read();
+    if (message == 'S')
+    {
+      Serial.print(F("Commande arret recu !!!"));
+      return true;
+    }
+    else
+    {
+      message = 'N';
+      return false;
+    }
+  }
+  else
+  {
+    message = 'N';
+    return false;
+  }
+}
 
 float data_compas()
 {
@@ -221,11 +242,11 @@ void demi_tour_droit()
   float angledirection = angle + 180;
   Serial.print(F("angle de direction"));
   Serial.println(angledirection);
+  bool direction_atteinte = false;
   if (angledirection > 360)
   {
     Serial.println(F("angle superieur a 360 degree"));
     float correction = angledirection - 360;
-    bool direction_atteinte = false;
     droit();
     while (direction_atteinte == false)
     {
@@ -234,6 +255,12 @@ void demi_tour_droit()
       Serial.println(angle);
       Serial.print(F("angle a atteindre :"));
       Serial.println(correction);
+      code_arret = signal_arret();
+      if (code_arret == true)
+      {
+        direction_atteinte = true;
+        stop_moteur();
+      }
       if (angle >= correction && angle < (correction + margemax))
       {
         Serial.println(F("direction atteinte"));
@@ -244,7 +271,6 @@ void demi_tour_droit()
   }
   else
   {
-    bool direction_atteinte = false;
     droit();
     while (direction_atteinte == false)
     {
@@ -253,6 +279,12 @@ void demi_tour_droit()
       Serial.println(angle);
       Serial.print(F("angle a atteindre :"));
       Serial.println(angledirection);
+      code_arret = signal_arret();
+      if (code_arret == true)
+      {
+        direction_atteinte = true,
+        stop_moteur();
+      }
       if (angle >= angledirection && angle < (angledirection + margemax))
       {
         Serial.println(F("direction atteinte"));
